@@ -70,10 +70,11 @@ def read_messages(stream, nmeareader, verbose, publisher):
                         EW = parsed_data.EW
                         lat = parsed_data.lat
                         lon = parsed_data.lon
-                    #elif parsed_data._msgID in ['VTG']: # VGA
-                    #    speed_mps = float(parsed_data.sogk)/3.6
+                    elif parsed_data._msgID in ['VTG']: # VGA
+                        speed_mps = float(parsed_data.sogk)/3.6
 
-                    publisher.publish_gps(lat, lon)
+                    if lat and lon:
+                        publisher.publish_gps(float(lat), float(lon), float(speed_mps))
             except Exception as err:
                 print(f"\n\nSomething went wrong {err}\n\n")
                 break
@@ -89,12 +90,13 @@ class GPSPublisher(Node):
         timer_period = 0.0005
         self.timer = self.create_timer(timer_period, self.publish_gps)
 
-    def publish_gps(self, lat, lon):
+    def publish_gps(self, lat, lon, speed_mps):
         msg = GPS()
         msg.lat = lat
         msg.lon = lon
+        msg.speed_mps = speed_mps
         self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "[{}, {}]"'.format(msg.lat, msg.lon))
+        self.get_logger().info('Publishing: "Pos: [{}, {}]; Speed: [{}]"'.format(msg.lat, msg.lon, msg.speed_mps))
 
 
 def main(args=None):
@@ -107,7 +109,6 @@ def main(args=None):
     # TODO: Remove
     ##rclpy.spin(minimal_publisher)
     ##exit()
-
 
     port = "/dev/ttyACM0"
     baudrate = 38400
@@ -122,7 +123,7 @@ def main(args=None):
         READING = True
         read_messages(serial, nmr, args.verbose, publisher)
 
-    minimal_publisher.destroy_node()
+    publisher.destroy_node()
     rclpy.shutdown()
 
 
