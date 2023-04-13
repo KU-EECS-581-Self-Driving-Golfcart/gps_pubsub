@@ -68,13 +68,16 @@ def read_messages(stream, nmeareader, verbose, publisher):
                     if parsed_data._msgID in ['RMC','GLL','GGA']:
                         NS = parsed_data.NS
                         EW = parsed_data.EW
-                        lat = parsed_data.lat
-                        lon = parsed_data.lon
+                        if type(parsed_data.lat) == float:
+                            lat = parsed_data.lat
+                        if type(parsed_data.lon) == float:
+                            lon = parsed_data.lon
                     elif parsed_data._msgID in ['VTG']: # VGA
-                        speed_mps = float(parsed_data.sogk)/3.6
+                        if type(parsed_data.sogk) == float:
+                            speed_mps = parsed_data.sogk/3.6
 
                     if lat and lon:
-                        publisher.publish_gps(float(lat), float(lon), float(speed_mps))
+                        publisher.publish_gps(lat, lon, speed_mps)
             except Exception as err:
                 print(f"\n\nSomething went wrong {err}\n\n")
                 break
@@ -105,10 +108,6 @@ def main(args=None):
     rclpy.init(args=None)
 
     publisher = GPSPublisher()
-
-    # TODO: Remove
-    ##rclpy.spin(minimal_publisher)
-    ##exit()
 
     port = "/dev/ttyACM0"
     baudrate = 38400
